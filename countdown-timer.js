@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카운트다운 타이머</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 50px 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .title {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .countdown {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .time-box {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(5px);
+            border-radius: 10px;
+            padding: 20px;
+            min-width: 70px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .time-number {
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            line-height: 1;
+        }
+
+        .separator {
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .message {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .completed {
+            font-size: 32px;
+            color: #ffd700;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title" id="mainTitle">남은 선착순 할인 수량 : 18개</div>
+        
+        <div class="countdown" id="countdown">
+            <div class="time-box">
+                <div class="time-number" id="hours1">0</div>
+            </div>
+            <div class="time-box">
+                <div class="time-number" id="hours2">0</div>
+            </div>
+            <div class="separator">:</div>
+            <div class="time-box">
+                <div class="time-number" id="minutes1">0</div>
+            </div>
+            <div class="time-box">
+                <div class="time-number" id="minutes2">0</div>
+            </div>
+            <div class="separator">:</div>
+            <div class="time-box">
+                <div class="time-number" id="seconds1">0</div>
+            </div>
+            <div class="time-box">
+                <div class="time-number" id="seconds2">0</div>
+            </div>
+        </div>
+
+        <div class="message" id="message">마감 시 "할인 전 가격"으로 올라갑니다.</div>
+    </div>
+
+    <script>
+        // URL 파라미터에서 값 가져오기
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // URL 파라미터에서 설정 읽기 (없으면 기본값 사용)
+        const REMAINING_QUANTITY = getUrlParameter('qty') || 18;
+        const DEADLINE = getUrlParameter('deadline') || '20251022 1030';
+
+        let timerInterval;
+
+        function parseDeadline(deadlineStr) {
+            // 공백 제거
+            deadlineStr = deadlineStr.replace(/\s+/g, '');
+            
+            const year = deadlineStr.substring(0, 4);
+            const month = deadlineStr.substring(4, 6);
+            const day = deadlineStr.substring(6, 8);
+            const hour = deadlineStr.substring(8, 10);
+            const minute = deadlineStr.substring(10, 12);
+            
+            return new Date(year, month - 1, day, hour, minute, 0).getTime();
+        }
+
+        function initTimer() {
+            document.getElementById('mainTitle').textContent = 
+                `남은 선착순 할인 수량 : ${REMAINING_QUANTITY}개`;
+            
+            const targetTime = parseDeadline(DEADLINE);
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            timerInterval = setInterval(() => updateCountdown(targetTime), 1000);
+            updateCountdown(targetTime);
+        }
+
+        function updateCountdown(targetTime) {
+            const now = new Date().getTime();
+            const distance = targetTime - now;
+
+            if (distance < 0) {
+                clearInterval(timerInterval);
+                document.getElementById('countdown').innerHTML = 
+                    '<div class="completed">⏰ 시간 종료!</div>';
+                return;
+            }
+
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const h = String(hours).padStart(2, '0');
+            const m = String(minutes).padStart(2, '0');
+            const s = String(seconds).padStart(2, '0');
+
+            document.getElementById('hours1').textContent = h[0];
+            document.getElementById('hours2').textContent = h[1];
+            document.getElementById('minutes1').textContent = m[0];
+            document.getElementById('minutes2').textContent = m[1];
+            document.getElementById('seconds1').textContent = s[0];
+            document.getElementById('seconds2').textContent = s[1];
+        }
+
+        initTimer();
+    </script>
+</body>
+</html>
